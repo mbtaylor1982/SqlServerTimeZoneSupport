@@ -84,5 +84,6 @@
     <Build Include="Functions\GetZoneId_Inline.sql" />
     <Build Include="Functions\ToDateTimeOffset.sql" />
     <Build Include="Functions\UtcToLocal_Inline.sql" />
+    <Build Include="Functions\ToDateTimeOffset_Inline.sql" />
   </ItemGroup>
 </Project>
