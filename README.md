@@ -21,19 +21,22 @@ SQL Server 2016 includes built-in support for Windows time zones using a new `AT
 3. Open the `tzdb.sql` file, and run it against your database.
    - It will create all objects in an independent schema called `[Tzdb]`.
    - Microsoft SQL Server 2008 R2 and higher are supported, including Azure SQL Database.
-4. Run the `SqlTzLoader.exe` utility, passing the connection string with the `-c` parameter.  
-   For example:
+4. Open the `app.config` file in a text editor and put in your database's connection string in the `database` element.
 
-   ```bat
-   SqlTzLoader.exe -c"Server=YourServerName;Database=YourDatabaseName;Trusted_Connection=True"
+	For Example:
+
+   ```xml
+   <add name="database" connectionString="Server=YourDatabaseServerName;Database=YourDatabaseName;Trusted_Connection=True" />
    ```
    
    or
    
-   ```bat
-   SqlTzLoader.exe -c"Server=YourServerName;Database=YourDatabaseName;User Id=foo;Password=bar"
+   ```xml
+   <add name="database" connectionString="Server=YourDatabaseServerName;Database=YourDatabaseName;User Id=foo;Password=bar" />
    ```
-   It will download the latest time zone data and populate the tables in the database.
+   (NOTE: name attribute must be "database")
+5. (Optional) Change the number in the `yearsAhead` property to the number of years into the future you would like to download time zone data for. This will determine how far into the future you can convert times.
+6. Run `SqlTzLoader.exe` and it will download the latest time zone data and populate the tables in the database.
 
 ### Staying Current
 
@@ -45,6 +48,32 @@ Our data comes from the [Noda Time TZDB NZD files][6], which in turn is generate
 
 There are several user-defined functions exposed for common time zone conversion operations.  If you need additional functions, please create an issue in [the issue tracker][7].
 
+#### ToDateTimeOffset
+
+Converts a `datetime` or `datetime2` value to a `datetimeoffset` value that has the correct offset for the local time zone specified.
+
+```sql
+-- SYNTAX
+Tzdb.ToDateTimeOffset([source_datetime], [source_timezone])
+
+-- EXAMPLE
+SELECT Tzdb.[ToDateTimeOffset]('2015-07-01 00:00:00', 'America/Los_Angeles')
+-- output: '2015-07-01 00:00:00 -07:00'
+```
+
+#### ToDateTimeOffset_Inline
+
+A table-valued version of `ToDateTimeOffset`. Generally this performs better than the non inline version when used in set operations such as joins.
+
+```sql
+-- SYNTAX
+Tzdb.ToDateTimeOffset([source_datetime], [source_timezone])
+
+-- EXAMPLE
+SELECT [Time] FROM Tzdb.[ToDateTimeOffset]('2015-07-01 00:00:00', 'America/Los_Angeles')
+-- output: '2015-07-01 00:00:00 -07:00'
+```
+
 #### UtcToLocal
 
 Converts a `datetime` or `datetime2` value from UTC to a specific time zone.  The output is a `datetimeoffset` value that has the correct local time and offset for the time zone requested.
@@ -55,6 +84,19 @@ Tzdb.UtcToLocal([utc_datetime], [dest_timezone])
 
 -- EXAMPLE
 SELECT Tzdb.UtcToLocal('2015-07-01 00:00:00', 'America/Los_Angeles')
+-- output: '2015-06-30 17:00:00 -07:00'
+```
+
+#### UtcToLocal_Inline
+
+A table-valued version of `UtcToLocal`. Generally this performs better than the non inline version when used in set operations such as joins.
+
+```sql
+-- SYNTAX
+Tzdb.UtcToLocal_Inline([utc_datetime], [dest_timezone])
+
+-- EXAMPLE
+SELECT [LocalTime] FROM Tzdb.UtcToLocal_Inline('2015-07-01 00:00:00', 'America/Los_Angeles')
 -- output: '2015-06-30 17:00:00 -07:00'
 ```
 
