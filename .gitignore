@@ -110,3 +110,6 @@ UpgradeLog*.XML
 
 # Debug Data Directories
 App_Data
+
+# Config File
+SqlTzLoader/App.config
