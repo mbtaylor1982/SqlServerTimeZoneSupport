@@ -12,16 +12,12 @@ namespace SqlTzLoader
 {
     class Program
     {
-        private static Options _options = new Options();
+        private static readonly string _connectionString = ConfigurationManager.ConnectionStrings["database"].ConnectionString;
+        private static readonly int _yearsAhead = int.Parse(ConfigurationManager.AppSettings["yearsAhead"]);
 
         static void Main(string[] args)
         {
-            if (CommandLine.Parser.Default.ParseArgumentsStrict(args, _options))
-            {
-                if (_options.Verbose) Console.WriteLine("ConnectionString: {0}", _options.ConnectionString);
-                
-                AsyncPump.Run(() => MainAsync(args));
-            }          
+            AsyncPump.Run(() => MainAsync(args));
         }
 
         static async Task MainAsync(string[] args)
@@ -41,8 +37,7 @@ namespace SqlTzLoader
         {
             var dictionary = new Dictionary<string, int>();
 
-            var cs = _options.ConnectionString;
-            using (var connection = new SqlConnection(cs))
+            using (var connection = new SqlConnection(_connectionString))
             {
                 var command = new SqlCommand("[Tzdb].[AddZone]", connection) { CommandType = CommandType.StoredProcedure };
                 command.Parameters.Add("@Name", SqlDbType.VarChar, 50);
@@ -64,8 +59,7 @@ namespace SqlTzLoader
 
         private static async Task WriteLinksAsync(IDictionary<string, int> zones, ILookup<string, string> aliases)
         {
-            var cs = _options.ConnectionString;
-            using (var connection = new SqlConnection(cs))
+            using (var connection = new SqlConnection(_connectionString))
             {
                 var command = new SqlCommand("[Tzdb].[AddLink]", connection) { CommandType = CommandType.StoredProcedure };
                 command.Parameters.Add("@LinkZoneId", SqlDbType.Int);
@@ -91,7 +85,7 @@ namespace SqlTzLoader
         private static async Task WriteIntervalsAsync(IDictionary<string, int> zones, CurrentTzdbProvider tzdb)
         {
             var currentUtcYear = SystemClock.Instance.Now.InUtc().Year;
-            var maxYear = currentUtcYear + 5;
+            var maxYear = currentUtcYear + _yearsAhead;
             var maxInstant = new LocalDate(maxYear + 1, 1, 1).AtMidnight().InUtc().ToInstant();
 
             var links = tzdb.Aliases.SelectMany(x => x).OrderBy(x => x).ToList();
@@ -148,8 +142,7 @@ namespace SqlTzLoader
                         dt.Rows.Add(utcStart, utcEnd, localStart, localEnd, offsetMinutes, abbreviation);
                     }
 
-                    var cs = _options.ConnectionString;
-                    using (var connection = new SqlConnection(cs))
+                    using (var connection = new SqlConnection(_connectionString))
                     {
                         var command = new SqlCommand("[Tzdb].[SetIntervals]", connection)
                         {
@@ -170,8 +163,7 @@ namespace SqlTzLoader
 
         private static async Task WriteVersion(string version)
         {
-            var cs = _options.ConnectionString;
-            using (var connection = new SqlConnection(cs))
+            using (var connection = new SqlConnection(_connectionString))
             {
                 var command = new SqlCommand("[Tzdb].[SetVersion]", connection) { CommandType = CommandType.StoredProcedure };
                 command.Parameters.AddWithValue("@Version", version);
