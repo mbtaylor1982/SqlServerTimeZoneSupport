@@ -76,11 +76,14 @@
     <Build Include="Types\IntervalTable.sql" />
     <Build Include="Procedures\SetIntervals.sql" />
     <Build Include="Functions\UtcToLocal.sql" />
+	<Build Include="Functions\UtcToLocal_Inline.sql" />
     <Build Include="Functions\LocalToUtc.sql" />
     <Build Include="Functions\SwitchZone.sql" />
     <Build Include="Functions\ConvertZone.sql" />
     <Build Include="Functions\GetZoneAbbreviation.sql" />
     <Build Include="Functions\GetZoneId.sql" />
     <Build Include="Functions\GetZoneId_Inline.sql" />
+    <Build Include="Functions\ToDateTimeOffset.sql" />
+    <Build Include="Functions\ToDateTimeOffset_Inline.sql" />
   </ItemGroup>
 </Project>
